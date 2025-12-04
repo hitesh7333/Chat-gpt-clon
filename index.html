@@ -1,396 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mega AI Chat</title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#ffffff" />
-
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", Arial;
-      background: #f6f7fb;
-      color: #111827;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI";
+      background: #f4f6fb;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* Layout */
-    .app {
-      display: flex;
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* SIDEBAR */
-    .sidebar-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.35);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-      z-index: 10;
-    }
-    .sidebar-overlay.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .sidebar {
-      position: fixed;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 78%;
-      max-width: 330px;
-      background: #ffffff;
-      box-shadow: 2px 0 16px rgba(15,23,42,0.18);
-      transform: translateX(-100%);
-      transition: transform 0.22s ease-out;
-      padding: 14px 14px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      z-index: 11;
-    }
-    .sidebar.open {
-      transform: translateX(0);
-    }
-    .sidebar-header {
-      font-weight: 600;
-      font-size: 18px;
-      padding: 4px 2px 6px;
-    }
-    .sidebar-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
-      font-size: 14px;
-    }
-    .sidebar-btn span.icon {
-      width: 20px;
-      text-align: center;
-    }
-    .chat-list {
-      margin-top: 4px;
-      flex: 1;
+    .chat-container {
+      height: calc(100vh - 60px);
       overflow-y: auto;
-      padding-right: 2px;
-    }
-    .chat-item {
-      padding: 8px 10px;
-      border-radius: 10px;
-      font-size: 14px;
-      margin-bottom: 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .chat-item.active {
-      background: #eef2ff;
-    }
-    .chat-title {
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .chat-actions {
-      display: flex;
-      gap: 6px;
-      margin-left: 8px;
-      font-size: 16px;
+      padding: 16px;
+      scroll-behavior: smooth;
     }
 
-    /* MAIN */
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-    .topbar {
-      height: 56px;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #ffffff;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .pill-btn {
-      border-radius: 999px;
-      border: 1px solid #e5e7eb;
-      padding: 6px 10px;
-      background: #f9fafb;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-    }
-    .round-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-    }
-    .avatar {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      background: #111827;
-      color: #f9fafb;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    /* CONTENT */
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 14px 16px 80px;
-    }
-
-    .home-hero {
-      margin-top: 26px;
-      text-align: center;
-    }
-    .home-title {
-      font-size: 22px;
-      font-weight: 600;
-      margin-bottom: 18px;
-    }
-    .chip-row {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-    .chip {
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: 1px solid #e5e7eb;
-      background: #ffffff;
-      font-size: 13px;
-    }
-    .chip strong { font-weight: 600; }
-
-    .quick-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-      gap: 10px;
-      margin-top: 6px;
-    }
-    .quick-card {
-      background: #ffffff;
-      border-radius: 18px;
-      padding: 12px;
-      text-align: left;
-      font-size: 13px;
-      border: 1px solid #e5e7eb;
-    }
-    .quick-title {
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .quick-desc {
-      font-size: 12px;
-      color: #6b7280;
-    }
-
-    /* CHAT MESSAGES */
-    .messages {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .msg-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-    }
-    .msg-row.user { justify-content: flex-end; }
-    .msg-avatar {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      background: #111827;
-      color: #f9fafb;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      margin-top: 4px;
-    }
-    .msg-avatar.bot {
-      background: #16a34a;
-    }
-    .bubble {
+    .message {
       max-width: 80%;
-      padding: 10px 12px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
       border-radius: 18px;
-      font-size: 14px;
-      line-height: 1.45;
-      background: #e5e7eb;
-      animation: fadeIn 0.15s ease-out;
+      font-size: 15px;
+      line-height: 22px;
+      animation: fadeIn .2s ease-in-out;
     }
-    .user .bubble {
-      background: #0f99ff;
-      color: white;
-      border-bottom-right-radius: 4px;
-    }
-    .bot .bubble {
-      background: #eef2ff;
-      border-bottom-left-radius: 4px;
-    }
-    .typing-dot {
-      display: inline-block;
-      width: 4px;
-      height: 4px;
-      border-radius: 999px;
-      background: #6b7280;
-      margin-right: 4px;
-      animation: bounce 0.9s infinite alternate;
-    }
-    .typing-dot:nth-child(2) { animation-delay: 0.15s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.3s; }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes bounce {
-      from { transform: translateY(0); opacity: 0.5; }
-      to { transform: translateY(-3px); opacity: 1; }
+
+    .user {
+      background: #0f99ff;
+      color: #fff;
+      margin-left: auto;
+      border-bottom-right-radius: 6px;
+    }
+    .bot {
+      background: #e8ecff;
+      color: #111;
+      border-bottom-left-radius: 6px;
     }
 
-    /* INPUT BAR */
-    .bottombar {
+    .input-area {
       position: fixed;
-      left: 0;
-      right: 0;
       bottom: 0;
-      padding: 10px 12px 14px;
-      background: linear-gradient(to top, #f9fafb, rgba(249,250,251,0.9));
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-    }
-    .plus-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      border: 1px solid #e5e7eb;
-      background: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-    }
-    .input-wrap {
-      flex: 1;
-      background: #ffffff;
-      border-radius: 999px;
-      border: 1px solid #e5e7eb;
-      padding: 6px 10px;
+      left: 0;
+      width: 100%;
+      background: #fff;
+      padding: 10px 12px;
+      border-top: 1px solid #d5d9e0;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    textarea {
+
+    .input-box {
       flex: 1;
-      border: none;
-      resize: none;
+      background: #f2f4f7;
+      border: 1px solid #d5d9e0;
+      padding: 10px 14px;
+      font-size: 15px;
+      border-radius: 40px;
       outline: none;
-      font-size: 14px;
-      max-height: 90px;
     }
-    .mic-btn {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      border: none;
-      background: transparent;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+
     .send-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 999px;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: #111;
       border: none;
-      background: #111827;
       color: white;
+      font-size: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <!-- Sidebar -->
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-    <div id="sidebar" class="sidebar">
-      <div class="sidebar-header">Chats</div>
-      <button id="newChatBtn" class="sidebar-btn">
-        <span class="icon">✏️</span><span>New chat</span>
-      </button>
-      <div id="chatList" class="chat-list"></div>
-      <div style="font-size:12px;color:#6b7280;margin-top:6px;">
-        Logged in as <strong>Hitesh</strong> (local)
-      </div>
-    </div>
 
-    <!-- Main -->
-    <div class="main">
-      <div class="topbar">
-        <button id="menuBtn" class="round-btn">≡</button>
-        <button class="pill-btn">
-          <span>Model</span>
-          <strong>GPT-5.1</strong>
-        </button>
-        <div class="round-btn">
-          <div class="avatar">HG</div>
-        </div>
-      </div>
+  <div id="chat" class="chat-container"></div>
 
-      <div id="content" class="content">
-        <!-- Filled by script: home screen or messages -->
-      </div>
-
-      <div class="bottombar">
-        <button class="plus-btn">＋</button>
-        <div class="input-wrap">
-          <textarea id="inp" rows="1" placeholder="Message Mega AI…"></textarea>
-          <button id="micBtn" class="mic-btn">🎤</button>
-        </div>
-        <button id="sendBtn" class="send-btn">➤</button>
-      </div>
-    </div>
+  <div class="input-area">
+    <input id="userInput" type="text" class="input-box" placeholder="Message Mega AI...">
+    <button id="sendBtn" class="send-btn">➤</button>
   </div>
 
   <script src="script.js"></script>
